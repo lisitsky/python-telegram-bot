@@ -20,6 +20,7 @@
 
 import unittest
 import sys
+from itertools import chain, combinations
 
 from flaky import flaky
 
@@ -100,6 +101,18 @@ class UserTest(BaseTest, unittest.TestCase):
         self.assertEqual(user['username'], self.username)
         self.assertEqual(user['type'], self.type)
 
+    def test_user_to_dict_without_optional_fields(self):
+        optional_fields = (
+            'last_name',
+            'type',
+            'username',)
+        for fields in powerset(optional_fields):
+            json_dict = self.json_dict.copy()
+            for field in fields:
+                del (json_dict[field])
+                user = telegram.User.de_json(json_dict, self._bot)
+                self.assertEqual(user.to_dict(), json_dict)
+
     @flaky(3, 1)
     def test_get_profile_photos(self):
         """Test for User.get_profile_photos"""
@@ -110,6 +123,13 @@ class UserTest(BaseTest, unittest.TestCase):
         result = user.get_profile_photos()
 
         self.assertNotEquals(result, None)
+
+
+def powerset(iterable):
+    "powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)"
+    # https://docs.python.org/3.5/library/itertools.html#itertools-recipes
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
 
 
 if __name__ == '__main__':
